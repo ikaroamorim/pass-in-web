@@ -6,6 +6,9 @@ Creation:
 npm create vite@latest
 -> React
 -> Typescript + SWC
+
+npm install -D tailwindcss postcss autoprefixer
+npx tailwindcss init -p
 ```
 
 
