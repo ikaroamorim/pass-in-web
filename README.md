@@ -20,6 +20,16 @@ To run:
 
 ```
 
+run back - end (From Rocket Seat)
+-clone https://github.com/rocketseat-education/nlw-unite-nodejs
+-install dependencies npm i
+-create a .env file with this content:
+```
+DATABASE_URL="file:./dev.db"
+```
+-run  'npx prima db seed'
+-npm run dev
+
 
 
 # React + TypeScript + Vite

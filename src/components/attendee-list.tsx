@@ -4,36 +4,73 @@ import { Table } from './table/table'
 import { TableHeader } from './table/table-header'
 import { TableData } from './table/table-data'
 import { TableRow } from './table/table-row'
-import { ChangeEvent, useState } from 'react'
-import { attendees } from '../data/attendees'
-//import { formatRelative } from 'date-fns'
+import { ChangeEvent, useEffect, useState } from 'react'
+
+interface IAttendee {
+   id: string
+   name: string
+   email: string
+   checkedInAt: string | null
+   createdAt: string
+}
 
 export function AttendeeList() {
-   //const currentDate = new Date()
    const [searchValue, setSearchValue] = useState<string>('')
    const [page, setPage] = useState<number>(1)
+   const [attendees, setAttendees] = useState<IAttendee[]>([])
+   const [total, setTotal] = useState<number>(0)
+   
 
-   const totalPages = Math.ceil(attendees.length / 10)
+   const totalPages = Math.ceil(total / 10)
+
+   useEffect(() => {
+      const url = new URL('http://localhost:3333/events/9e9bd979-9d10-4915-b339-3786b1634f33/attendees')
+
+      url.searchParams.set('pageIndex', String(page - 1))
+
+      if (searchValue.length > 0) {
+         url.searchParams.set('query', searchValue)
+      }
+
+      fetch(url)
+         .then(response => response.json())
+         .then(data => {
+            console.log(data)
+            setAttendees(data.attendees)
+            setTotal(data.total)
+         })
+   }, [page, searchValue])
+
+   function setCurrentPage(page: number) {
+
+      const url = new URL(window.location.toString())
+
+      url.searchParams.set('pageIndex', String(page))
+
+      window.history.pushState({}, '', url)
+      setPage(page)
+   }
 
 
    function onSearchInputChange(event: ChangeEvent<HTMLInputElement>) {
       setSearchValue(event.target.value)
+      setCurrentPage(1)
    }
 
    function goToNextPage(): void {
-      setPage(page + 1)
+      setCurrentPage(page + 1)
    }
 
    function goToPreviousPage(): void {
-      setPage(page - 1)
+      setCurrentPage(page - 1)
    }
 
    function goToLastPage(): void {
-      setPage(totalPages)
+      setCurrentPage(totalPages)
    }
 
    function goToFirstPage(): void {
-      setPage(1)
+      setCurrentPage(1)
    }
 
    return (
@@ -42,7 +79,7 @@ export function AttendeeList() {
             <h1 className="text-2xl font-bold">Participant</h1>
             <div className="px-3 w-72 py-1.5 border border-white/10 rounded-lg text-sm flex items-center gap-3" >
                <Search className='size-4 text-emerald-300' />
-               <input value={searchValue} onChange={onSearchInputChange} className="bg-transparent flex-1 outline-none h-auto border-0 p-0 text-sm" placeholder="Search participant..." />
+               <input value={searchValue} onChange={onSearchInputChange} className="bg-transparent flex-1 outline-none h-auto border-0 p-0 text-sm focus:ring-0" placeholder="Search participant..." />
             </div>
          </div>
 
@@ -61,7 +98,7 @@ export function AttendeeList() {
             </thead>
             <tbody>
                {
-                  attendees.slice((page - 1) * 10, page * 10).map((attendee) => {
+                  attendees.map((attendee) => {
                      return (
                         <TableRow key={attendee.id}>
                            <TableData >
@@ -74,10 +111,12 @@ export function AttendeeList() {
                                  <span>{attendee.email}</span>
                               </div>
                            </TableData>
-                           <TableData >{attendee.createdAt.toLocaleDateString()}</TableData>
-                           <TableData >{attendee.checkedInAt.toLocaleDateString()}</TableData>
-                           {/* <TableData >{formatRelative(attendee.createdAt, currentDate)}</TableData>
-                           <TableData >{formatRelative(attendee.checkedInAt, currentDate)}</TableData> */}
+                           <TableData >{(new Date(attendee.createdAt)).toLocaleDateString()}</TableData>
+                           <TableData >{
+                              !attendee.checkedInAt
+                                 ? <span className='text-zinc-400'>No ckeck-in yet</span>
+                                 : (new Date(attendee.checkedInAt)).toLocaleDateString()}
+                           </TableData>
                            <TableData >
                               <IconButton transparent>
                                  <MoreHorizontal className='size-4' />
@@ -91,7 +130,7 @@ export function AttendeeList() {
             </tbody>
             <tfoot>
                <tr>
-                  <TableData colSpan={3}> Showing 10 of {attendees.length} items</TableData>
+                  <TableData colSpan={3}> Showing {attendees.length} of {total} items</TableData>
                   <TableData className='py-3 px-4 text-sm text-zinc-300 text-right' colSpan={3}>
                      <div className='inline-flex items-center gap-8 '>
                         <span>Page {page} of {totalPages}</span>
@@ -99,10 +138,10 @@ export function AttendeeList() {
                            <IconButton onClick={goToFirstPage} disabled={page === 1}>
                               <ChevronsLeft className='size-4' />
                            </IconButton>
-                           <IconButton onClick={goToPreviousPage}  disabled={page === 1}>
+                           <IconButton onClick={goToPreviousPage} disabled={page === 1}>
                               <ChevronLeft className='size-4' />
                            </IconButton>
-                           <IconButton onClick={goToNextPage}  disabled={page === totalPages}>
+                           <IconButton onClick={goToNextPage} disabled={page === totalPages}>
                               <ChevronRight className='size-4' />
                            </IconButton>
                            <IconButton onClick={goToLastPage} disabled={page === totalPages}>
