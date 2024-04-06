@@ -15,10 +15,27 @@ interface IAttendee {
 }
 
 export function AttendeeList() {
-   const [searchValue, setSearchValue] = useState<string>('')
-   const [page, setPage] = useState<number>(1)
    const [attendees, setAttendees] = useState<IAttendee[]>([])
    const [total, setTotal] = useState<number>(0)
+   const [searchValue, setSearchValue] = useState<string>(()=>{
+      const url = new URL(window.location.toString())
+
+      if( url.searchParams.has('query')){
+         return url.searchParams.get('query')??''
+      }else{
+         return ''
+      }
+
+   })
+   const [page, setPage] = useState<number>(()=>{
+      const url = new URL(window.location.toString())
+
+      if( url.searchParams.has('pageIndex')){
+         return Number(url.searchParams.get('pageIndex'))
+      }else{
+         return 1
+      }
+   })
    
 
    const totalPages = Math.ceil(total / 10)
@@ -41,8 +58,16 @@ export function AttendeeList() {
          })
    }, [page, searchValue])
 
-   function setCurrentPage(page: number) {
+   function setCurrentSearch(search: string){
+      const url = new URL(window.location.toString())
 
+      url.searchParams.set('query', search)
+
+      window.history.pushState({}, '', url)
+      setSearchValue(search)
+   }
+
+   function setCurrentPage(page: number) {
       const url = new URL(window.location.toString())
 
       url.searchParams.set('pageIndex', String(page))
@@ -53,7 +78,7 @@ export function AttendeeList() {
 
 
    function onSearchInputChange(event: ChangeEvent<HTMLInputElement>) {
-      setSearchValue(event.target.value)
+      setCurrentSearch(event.target.value)
       setCurrentPage(1)
    }
 
